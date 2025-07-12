@@ -37,6 +37,6 @@ public class Account {
     private Customer customer;
 
     @ManyToOne
-    @JoinColumn(name = "act_type_id", nullable = false)
+    @JoinColumn(name = "act_type_id", nullable = false, referencedColumnName = "id")
     private AccountType actType;
 }

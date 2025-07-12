@@ -8,13 +8,21 @@ import org.springframework.web.server.ResponseStatusException;
 import java.time.LocalDateTime;
 
 @RestControllerAdvice
-public class ServiceException {
+public class GlobalExceptionHandler {
 
     @ExceptionHandler(ResponseStatusException.class)
     public ResponseEntity<?> handleServiceException(ResponseStatusException e) {
 
+        String message;
+
+        if (e.getStatusCode().value() == 400) {
+            message = "Invalid request";
+        } else {
+            message = "Business logic error";
+        }
+
         ErrorResponse<String> error = ErrorResponse.<String>builder()
-                .message("Business logic error")
+                .message(message)
                 .status(e.getStatusCode().value())
                 .timeSTamp(LocalDateTime.now())
                 .details(e.getReason())
