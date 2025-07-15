@@ -7,6 +7,7 @@ import com.oudom.mbapi.dto.UpdateCustomerRequest;
 import com.oudom.mbapi.mapper.CustomerMapper;
 import com.oudom.mbapi.repository.CustomerRepository;
 import com.oudom.mbapi.service.CustomerService;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -27,7 +28,7 @@ public class CustomerServiceImpl implements CustomerService {
     @Override
     public List<CustomerResponse> findAll() {
 
-        List<Customer> customers = customerRepository.findAll();
+        List<Customer> customers = customerRepository.findAllByIsDeletedFalse();
 
        return customers
                .stream()
@@ -38,7 +39,7 @@ public class CustomerServiceImpl implements CustomerService {
 
     @Override
     public CustomerResponse findByPhoneNumber(String phoneNumber) {
-        return customerRepository.findByPhoneNumber(phoneNumber)
+        return customerRepository.findByPhoneNumberAndIsDeletedFalse(phoneNumber)
                 .map(customerMapper::fromCustomer)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, String.format("Customer with phone number '%s' not found", phoneNumber)));
     }
@@ -95,6 +96,15 @@ public class CustomerServiceImpl implements CustomerService {
                         ));
 
        customerRepository.delete(customer);
+    }
+
+    @Transactional
+    @Override
+    public void disableByPhoneNumber(String phoneNumber) {
+        if (!customerRepository.isExitsByPhoneNumber(phoneNumber)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Phone number not found");
+        }
+        customerRepository.disableByPhoneNumber(phoneNumber);
     }
 
 

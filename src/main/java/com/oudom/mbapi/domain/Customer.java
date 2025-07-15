@@ -34,7 +34,7 @@ public class Customer {
     private String remark;
 
     @Column(nullable = false)
-    private Boolean isDeleted;
+    private Boolean isDeleted; // soft delete
 
     @OneToMany(mappedBy = "customer")
     private List<Account> accounts;
