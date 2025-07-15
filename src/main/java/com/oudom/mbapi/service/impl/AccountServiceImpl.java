@@ -57,7 +57,7 @@ public class AccountServiceImpl implements AccountService {
     @Override
     public List<AccountResponse> findAll() {
 
-        List<Account> accounts = accountRepository.findByIsDeletedFalse();
+        List<Account> accounts = accountRepository.findAllByIsDeletedFalse();
 
         return accounts.stream().map(accountMapper::fromAccount).toList();
     }

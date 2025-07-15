@@ -8,7 +8,7 @@ import java.util.Optional;
 
 public interface AccountRepository extends JpaRepository<Account, Integer> {
 
-    List<Account> findByIsDeletedFalse();
+    List<Account> findAllByIsDeletedFalse();
 
     Optional<Account> findByActNoAndIsDeletedFalse(String actNo);
 

@@ -68,7 +68,7 @@ public class AccountController {
     }
 
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PatchMapping("{actNo}/disable")
+    @PutMapping("{actNo}")
     public void disableByActNo(@PathVariable String actNo) {
         accountService.disableByActNo(actNo);
     }
