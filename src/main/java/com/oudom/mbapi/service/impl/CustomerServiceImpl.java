@@ -7,7 +7,9 @@ import com.oudom.mbapi.dto.CreateCustomerRequest;
 import com.oudom.mbapi.dto.CustomerResponse;
 import com.oudom.mbapi.dto.UpdateCustomerRequest;
 import com.oudom.mbapi.mapper.CustomerMapper;
+import com.oudom.mbapi.mapper.KYCMapper;
 import com.oudom.mbapi.repository.CustomerRepository;
+import com.oudom.mbapi.repository.KYCRepository;
 import com.oudom.mbapi.repository.SegmentRepository;
 import com.oudom.mbapi.service.CustomerService;
 import jakarta.transaction.Transactional;
@@ -27,6 +29,8 @@ public class CustomerServiceImpl implements CustomerService {
 
     private final CustomerRepository customerRepository;
     private final CustomerMapper customerMapper;
+    private final KYCRepository kycRepository;
+    private final KYCMapper kycMapper;
     private final SegmentRepository segmentRepository;
 
     @Override
@@ -48,6 +52,7 @@ public class CustomerServiceImpl implements CustomerService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, String.format("Customer with phone number '%s' not found", phoneNumber)));
     }
 
+    @Transactional
     @Override
     public CustomerResponse createNew(CreateCustomerRequest createCustomerRequest) {
 
@@ -59,24 +64,23 @@ public class CustomerServiceImpl implements CustomerService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Phone number already exists!");
         }
 
-        if (customerRepository.existsByNationalCardId(createCustomerRequest.nationalCardId())) {
+        if (kycRepository.existsByNationalCardId(createCustomerRequest.kyc().nationalCardId())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "National card ID already exists!");
         }
 
         Segment segment = segmentRepository.findById(createCustomerRequest.segmentId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Segment not found"));
 
-        KYC kyc = new KYC();
-        kyc.setNationalCardId(createCustomerRequest.nationalCardId());
-        kyc.setIsVerified(false);
-        kyc.setIsDeleted(false);
-
         Customer customer = customerMapper.toCustomer(createCustomerRequest);
         customer.setIsDeleted(false);
         customer.setAccounts(new ArrayList<>());
         customer.setSegment(segment);
 
+        KYC kyc = kycMapper.toKYC(createCustomerRequest.kyc());
+        kyc.setIsVerified(false);
+        kyc.setIsDeleted(false);
         kyc.setCustomer(customer);
+
         customer.setKyc(kyc);
 
         customerRepository.save(customer);

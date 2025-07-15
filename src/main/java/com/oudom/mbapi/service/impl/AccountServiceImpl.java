@@ -13,7 +13,6 @@ import com.oudom.mbapi.repository.CustomerRepository;
 import com.oudom.mbapi.service.AccountService;
 import com.oudom.mbapi.util.AccountNumberGenerator;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.ApplicationContext;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -21,8 +20,8 @@ import org.springframework.web.server.ResponseStatusException;
 import java.math.BigDecimal;
 import java.util.List;
 
-@RequiredArgsConstructor
 @Service
+@RequiredArgsConstructor
 public class AccountServiceImpl implements AccountService {
 
     private final AccountRepository accountRepository;
@@ -30,39 +29,29 @@ public class AccountServiceImpl implements AccountService {
     private final AccountTypeRepository accountTypeRepository;
     private final AccountMapper accountMapper;
     private final AccountNumberGenerator accountNumberGenerator;
-    private final ApplicationContext applicationContext;
 
     @Override
     public AccountResponse createAccount(CreateAccountRequest createAccountRequest) {
 
         Customer customer = customerRepository.findById(createAccountRequest.custId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Customer not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Customer not found"));
+
+        if (!customer.getKyc().getIsVerified()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Cannot create account: Customer KYC is not verified");
+        }
 
         AccountType accountType = accountTypeRepository.findById(createAccountRequest.actTypeId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Account type not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Account type not found"));
 
-
-        Account account = new Account();
+        Account account = accountMapper.toAccount(createAccountRequest);
         account.setActNo(accountNumberGenerator.generateAccountNumber());
-        account.setActCurrency(createAccountRequest.actCurrency());
-        account.setBalance(createAccountRequest.balance());
         account.setCustomer(customer);
         account.setActType(accountType);
         account.setIsDeleted(false);
+        account.setOverLimit(determineOverLimit(customer.getSegment().getName()));
 
-        String segment = customer.getSegment().getName();
-
-        if (segment.equalsIgnoreCase("Gold")) {
-            account.setOverLimit(BigDecimal.valueOf(50000));
-        } else if (segment.equalsIgnoreCase("Silver")) {
-            account.setOverLimit(BigDecimal.valueOf(10000));
-        } else if (segment.equalsIgnoreCase("Regular")) {
-            account.setOverLimit(BigDecimal.valueOf(5000));
-        }
-
-        Account savedAccount = accountRepository.save(account);
-
-        return accountMapper.fromAccount(savedAccount);
+        return accountMapper.fromAccount(accountRepository.save(account));
     }
 
     @Override
@@ -130,4 +119,14 @@ public class AccountServiceImpl implements AccountService {
 
         accountRepository.save(account);
     }
+
+    private BigDecimal determineOverLimit(String segmentName) {
+        return switch (segmentName.toLowerCase()) {
+            case "gold" -> BigDecimal.valueOf(50000);
+            case "silver" -> BigDecimal.valueOf(10000);
+            case "regular" -> BigDecimal.valueOf(5000);
+            default -> BigDecimal.valueOf(1000);
+        };
+    }
+
 }

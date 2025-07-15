@@ -1,5 +1,6 @@
 package com.oudom.mbapi.dto;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
@@ -13,10 +14,12 @@ public record CreateCustomerRequest(
 
         String email,
         String phoneNumber,
-        String nationalCardId,
         String remark,
 
         @NotNull(message = "Segment ID is required")
-        Integer segmentId
+        Integer segmentId,
+
+        @Valid
+        CreateKYCRequest kyc
 ) {
 }

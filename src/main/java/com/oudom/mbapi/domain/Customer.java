@@ -30,9 +30,6 @@ public class Customer {
     @Column(unique = true, updatable = false)
     private String phoneNumber;
 
-    @Column(unique = true, updatable = false)
-    private String nationalCardId;
-
     @Column(columnDefinition = "TEXT")
     private String remark;
 

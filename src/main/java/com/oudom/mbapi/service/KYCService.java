@@ -1,5 +1,7 @@
 package com.oudom.mbapi.service;
 
+import com.oudom.mbapi.dto.KYCResponse;
+
 public interface KYCService {
-    void verifyKYC(Integer customerId);
+    KYCResponse verifyKYC(Integer customerId);
 }
