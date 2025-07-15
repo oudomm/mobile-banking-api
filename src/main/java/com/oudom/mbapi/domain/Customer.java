@@ -30,11 +30,14 @@ public class Customer {
     @Column(unique = true, updatable = false)
     private String phoneNumber;
 
+    @Column(unique = true, updatable = false)
+    private String nationalCardId;
+
     @Column(columnDefinition = "TEXT")
     private String remark;
 
     @Column(nullable = false)
-    private Boolean isDeleted; // soft delete
+    private Boolean isDeleted;
 
     @OneToMany(mappedBy = "customer")
     private List<Account> accounts;
@@ -42,4 +45,8 @@ public class Customer {
     @OneToOne(mappedBy = "customer", cascade = CascadeType.ALL)
     @PrimaryKeyJoinColumn
     private KYC kyc;
+
+    @ManyToOne
+    @JoinColumn(name = "segment_id", nullable = false, referencedColumnName = "id")
+    private Segment segment;
 }

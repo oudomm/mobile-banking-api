@@ -30,6 +30,9 @@ public class Account {
     private BigDecimal balance;
 
     @Column(nullable = false)
+    private BigDecimal overLimit;
+
+    @Column(nullable = false)
     private Boolean isDeleted;
 
     @ManyToOne

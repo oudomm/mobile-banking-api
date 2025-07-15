@@ -20,6 +20,8 @@ public interface CustomerRepository extends JpaRepository<Customer, Integer> {
 
     boolean existsByPhoneNumber(String phoneNumber);
 
+    boolean existsByNationalCardId(String nationalCardId);
+
     @Query(value = """
         SELECT EXISTS (SELECT c
                 FROM Customer c

@@ -18,6 +18,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @RequiredArgsConstructor
@@ -48,6 +49,16 @@ public class AccountServiceImpl implements AccountService {
         account.setCustomer(customer);
         account.setActType(accountType);
         account.setIsDeleted(false);
+
+        String segment = customer.getSegment().getName();
+
+        if (segment.equalsIgnoreCase("Gold")) {
+            account.setOverLimit(BigDecimal.valueOf(50000));
+        } else if (segment.equalsIgnoreCase("Silver")) {
+            account.setOverLimit(BigDecimal.valueOf(10000));
+        } else if (segment.equalsIgnoreCase("Regular")) {
+            account.setOverLimit(BigDecimal.valueOf(5000));
+        }
 
         Account savedAccount = accountRepository.save(account);
 

@@ -1,11 +1,14 @@
 package com.oudom.mbapi.service.impl;
 
 import com.oudom.mbapi.domain.Customer;
+import com.oudom.mbapi.domain.KYC;
+import com.oudom.mbapi.domain.Segment;
 import com.oudom.mbapi.dto.CreateCustomerRequest;
 import com.oudom.mbapi.dto.CustomerResponse;
 import com.oudom.mbapi.dto.UpdateCustomerRequest;
 import com.oudom.mbapi.mapper.CustomerMapper;
 import com.oudom.mbapi.repository.CustomerRepository;
+import com.oudom.mbapi.repository.SegmentRepository;
 import com.oudom.mbapi.service.CustomerService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +27,7 @@ public class CustomerServiceImpl implements CustomerService {
 
     private final CustomerRepository customerRepository;
     private final CustomerMapper customerMapper;
+    private final SegmentRepository segmentRepository;
 
     @Override
     public List<CustomerResponse> findAll() {
@@ -55,15 +59,27 @@ public class CustomerServiceImpl implements CustomerService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Phone number already exists!");
         }
 
+        if (customerRepository.existsByNationalCardId(createCustomerRequest.nationalCardId())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "National card ID already exists!");
+        }
+
+        Segment segment = segmentRepository.findById(createCustomerRequest.segmentId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Segment not found"));
+
+        KYC kyc = new KYC();
+        kyc.setNationalCardId(createCustomerRequest.nationalCardId());
+        kyc.setIsVerified(false);
+        kyc.setIsDeleted(false);
+
         Customer customer = customerMapper.toCustomer(createCustomerRequest);
         customer.setIsDeleted(false);
         customer.setAccounts(new ArrayList<>());
+        customer.setSegment(segment);
 
-        log.info("Customer before save: {}", customer.getId());
+        kyc.setCustomer(customer);
+        customer.setKyc(kyc);
 
         customerRepository.save(customer);
-
-        log.info("Customer after save: {}", customer.getId());
 
         return customerMapper.fromCustomer(customer);
     }
